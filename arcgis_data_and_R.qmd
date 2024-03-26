@@ -1,8 +1,11 @@
 ---
-title: "R Spatial Examples"
+title: "ArcGIS Data + Basic R Mapping"
 author: "Skyler Elmstrom"
 date: "`r Sys.Date()`"
-output: html_document
+format:
+  html:
+    toc: true
+editor: visual
 ---
 
 ```{r setup, include=FALSE}
@@ -11,6 +14,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
+### Requirements
+
 You'll probably want to be familiar with or read/watch up on these topics before starting:
 
 -   `tidyverse` syntax and its ecosystem of R packages i.e. `dplyr`, `stringr`, `ggplot2`, etc.
@@ -18,10 +23,14 @@ You'll probably want to be familiar with or read/watch up on these topics before
 -   Get setup and familiar with our agency's centralized GIS platform [GeoHUB](https://maps.doh.wa.lcl/portal/apps/sites/#/geohub/pages/about)
 -   Look at the ESRI docs or consult the GIS team on using [ArcGIS Enterprise](https://www.esri.com/en-us/arcgis/products/arcgis-enterprise/windows-linux), [ArcGIS Online](https://www.esri.com/en-us/arcgis/products/arcgis-online/resources), and the [ArcGIS REST API](https://developers.arcgis.com/rest/)
 
+### Optional Items
+
 There are some other interesting resources not yet covered here you might look into for integrating web ArcGIS services and the data available from these platforms with R and Python:
 
 -   ESRI's `R-ArcGIS Bridge` - <https://www.esri.com/en-us/arcgis/products/r-arcgis-bridge/get-started> - This is ESRIs direct integration solution for RStudio + ArcGIS software. It requires an ArcGIS license on your system to use ArcGIS's geoprocessing tools from RStudio but perhaps some features will work without having a license such as accessing content from ArcGIS Online or ArcGIS Enterprise. You'll also need to become familiar with how to make python packages accessible to your R environment with `reticulate` and the Conda package manager as the bridge requires at least the `arcgisbinding` python package. I think this is certainly a great option for ArcGIS power users, but maybe less applicable to R users. You decide!
 -   `arcpullr` - <https://pfrater.github.io/arcpullr/> - Skip the fuss (maybe) with an R package that makes ArcGIS REST APIs more accessible. Check it out for me?
+
+### Additional Resources
 
 If you truly wish to be a spatial spelunker, then come back to absorb some of these resources:
 
@@ -33,12 +42,16 @@ If none of these sources if information whet your appetite, please reach out to 
 
 ## Load Dependencies
 
-```{r}
-# Restore packages from the lockfile
+This Quart markdown works best if you acquired it by cloning its source repository from GitHub.
+
+> File → New Project → Select 'Version Control' in the New Project Wizard → Select 'Git' → Copy the repository URL from GitHub into this wizard
+
+```{r renv-restore}
+# Restore packages from the renv lockfile used in this project
 renv::restore()
 ```
 
-```{r}
+```{r install-pak}
 # install.packages("pak") # fast and secure package installer
 ```
 
@@ -46,7 +59,7 @@ renv::restore()
 # pak::pkg_install(c("sf", "tidyverse")) # install meta packages for common spatial data needs
 ```
 
-```{r}
+```{r load-packages}
 library(dplyr) # tidyverse
 library(ggplot2) # tidyverse
 library(sf) # https://r-spatial.github.io/sf/
@@ -98,7 +111,7 @@ wa_county_map
 Let's Refine this map to look better:
 
 -   Separating county labels with two words to two separate lines to fit in their polygons better
--   Individual adjustments to counties that have poor label placement – i.e. Columbia, Garfield, Wahkiakum counties
+-   Individual adjustments to counties that have poor label placement -- i.e. Columbia, Garfield, Wahkiakum counties
 
 ```{r}
 # Adjust two word counties to use a new line for each word to save space
@@ -136,10 +149,10 @@ wa_county_map2
 
 This is looking better for visualization purposes but where did all the water go?! Why are the counties such a weird shape from what we are used to looking at? Let's fix that.
 
-- Add bordering Oregon and Idaho polygons
-- Add some marine areas within the legal county boundaries – I think people are used to seeing WA this way rather than the full legal boundaries
-- Add and reorder the `geom_sf` layers so that the county lines, polygons, and labels overlap nicely
-- Create a boundary box to focus our map view on WA instead of WA + OR + ID
+-   Add bordering Oregon and Idaho polygons
+-   Add some marine areas within the legal county boundaries -- I think people are used to seeing WA this way rather than the full legal boundaries
+-   Add and reorder the `geom_sf` layers so that the county lines, polygons, and labels overlap nicely
+-   Create a boundary box to focus our map view on WA instead of WA + OR + ID
 
 ```{r}
 # Get some other boundaries from ESRI living atlas: 
@@ -203,4 +216,3 @@ wa_county_map3
 -   Other capabilities of the [ArcGIS REST API](https://developers.arcgis.com/rest/) that make it an attractive way to get data
 -   Sharable, reusable functions for common spatial tasks at WADOH
 -   Reprojecting data for doing spatial analysis
--   
