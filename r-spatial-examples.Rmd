@@ -46,8 +46,8 @@ wa_county <- sf::st_read(url)
 # Get Some centroids for labelling if you'd like
 wa_county_cent <- sf::st_centroid(wa_county)
 ```
-## A Simple plot of spatial data we found online
 
+## A Simple plot of spatial data we found online
 
 ```{r}
 wa_county_map <- ggplot() +
@@ -76,12 +76,14 @@ wa_county_cent <- wa_county_cent %>%
 # Adjust centroids so labels do not overlap using nudge_x and nudge_y
 wa_county_map2 <- ggplot() +
   geom_sf(data = wa_county, fill = "lightpink", color = "white") + # Plot county boundaries
-  geom_sf_text(data = wa_county_cent %>% filter(!JURISDICT_LABEL_NM %in% c("Columbia", "Garfield")), 
+  geom_sf_text(data = wa_county_cent %>% filter(!JURISDICT_LABEL_NM %in% c("Columbia", "Garfield", "Wahkiakum")), 
                aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black") +
   geom_sf_text(data = wa_county_cent %>% filter(JURISDICT_LABEL_NM == "Columbia"), 
                aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black", nudge_y = 0.1) +
   geom_sf_text(data = wa_county_cent %>% filter(JURISDICT_LABEL_NM == "Garfield"), 
                aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black", nudge_y = 0.15) +
+  geom_sf_text(data = wa_county_cent %>% filter(JURISDICT_LABEL_NM == "Wahkiakum"), 
+               aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black", nudge_x = -0.3, nudge_y = -0.1) +
   theme_minimal() +
   labs(title = "Washington County Boundaries with Centroids")  +
   theme(
@@ -129,12 +131,14 @@ wa_county_map3 <- ggplot() +
   geom_sf(data = wa_county, fill = "lightpink", color = NA) + # Plot county boundaries
   geom_sf(data = marine, color = NA, fill = "lightblue2") +
   geom_sf(data = wa_county, fill = NA, color = "white") + # Plot county boundary lines over other polygon layers
-  geom_sf_text(data = wa_county_cent %>% filter(!JURISDICT_LABEL_NM %in% c("Columbia", "Garfield")),# Add all labels except Columbia and Garfield
+  geom_sf_text(data = wa_county_cent %>% filter(!JURISDICT_LABEL_NM %in% c("Columbia", "Garfield", "Wahkiakum")), 
                aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black") +
-  geom_sf_text(data = wa_county_cent %>% filter(JURISDICT_LABEL_NM == "Columbia"), # Add and adjust Columbia label separately
-               aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black", nudge_y = 0.1) + 
-  geom_sf_text(data = wa_county_cent %>% filter(JURISDICT_LABEL_NM == "Garfield"), # Add and adjust Garfield label separately
+  geom_sf_text(data = wa_county_cent %>% filter(JURISDICT_LABEL_NM == "Columbia"), 
+               aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black", nudge_y = 0.1) +
+  geom_sf_text(data = wa_county_cent %>% filter(JURISDICT_LABEL_NM == "Garfield"), 
                aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black", nudge_y = 0.15) +
+  geom_sf_text(data = wa_county_cent %>% filter(JURISDICT_LABEL_NM == "Wahkiakum"), 
+               aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black", nudge_x = -0.3, nudge_y = -0.1) +
   coord_sf(xlim = c(wa_bbox$xmin, wa_bbox$xmax), ylim = c(wa_bbox$ymin, wa_bbox$ymax)) + # Focus map on extent of county data only
   theme_minimal() +
   labs(title = "Washington State County Boundaries with Centroid Labelling")  +
@@ -149,6 +153,5 @@ wa_county_map3 <- ggplot() +
   )
   
 wa_county_map3
-
 ```
 
