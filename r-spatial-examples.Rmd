@@ -9,6 +9,28 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Introduction
+
+You'll probably want to be familiar with or read/watch up on these topics before starting:
+
+-   `tidyverse` syntax and its ecosystem of R packages i.e. `dplyr`, `stringr`, `ggplot2`, etc.
+-   `sf` package for working with spatial data (gets even better with tidyverse)
+-   Get setup and familiar with our agency's centralized GIS platform [GeoHUB](https://maps.doh.wa.lcl/portal/apps/sites/#/geohub/pages/about)
+-   Look at the ESRI docs or consult the GIS team on using [ArcGIS Enterprise](https://www.esri.com/en-us/arcgis/products/arcgis-enterprise/windows-linux), [ArcGIS Online](https://www.esri.com/en-us/arcgis/products/arcgis-online/resources), and the [ArcGIS REST API](https://developers.arcgis.com/rest/)
+
+There are some other interesting resources not yet covered here you might look into for integrating web ArcGIS services and the data available from these platforms with R and Python:
+
+-   ESRI's `R-ArcGIS Bridge` - <https://www.esri.com/en-us/arcgis/products/r-arcgis-bridge/get-started> - This is ESRIs direct integration solution for RStudio + ArcGIS software. It requires an ArcGIS license on your system to use ArcGIS's geoprocessing tools from RStudio but perhaps some features will work without having a license such as accessing content from ArcGIS Online or ArcGIS Enterprise. You'll also need to become familiar with how to make python packages accessible to your R environment with `reticulate` and the Conda package manager as the bridge requires at least the `arcgisbinding` python package. I think this is certainly a great option for ArcGIS power users, but maybe less applicable to R users. You decide!
+-   `arcpullr` - <https://pfrater.github.io/arcpullr/> - Skip the fuss (maybe) with an R package that makes ArcGIS REST APIs more accessible. Check it out for me?
+
+If you truly wish to be a spatial spelunker, then come back to absorb some of these resources:
+
+-   [The Epidemiologist R Handbook](https://epirhandbook.com/en/)
+-   [Spatial Data Science with Applications in R](https://r-spatial.org/book/)
+-   [Big Book or R - Geospatial Chapter](https://www.bigbookofr.com/geospatial.html)
+
+If none of these sources if information whet your appetite, please reach out to me! [skyler.elmstrom\@doh.wa.gov](mailto:skyler.elmstrom@doh.wa.gov)
+
 ## Load Dependencies
 
 ```{r}
@@ -17,11 +39,11 @@ renv::restore()
 ```
 
 ```{r}
-install.packages("pak") # fast and secure package installer
+# install.packages("pak") # fast and secure package installer
 ```
 
 ```{r}
-# pak::pkg_install(c("sf", "terra", "tidyverse")) # install meta packages for common spatial data needs
+# pak::pkg_install(c("sf", "tidyverse")) # install meta packages for common spatial data needs
 ```
 
 ```{r}
@@ -31,10 +53,12 @@ library(sf) # https://r-spatial.github.io/sf/
 library(stringr) # tidyverse
 ```
 
-
 ## Load Some Spatial Data
-https://geo.wa.gov/datasets/wadnr::wa-county-boundaries/about
-https://maps.doh.wa.lcl/portal/apps/sites/#/geohub/
+
+Find some data in an ArcGIS portal!
+
+-   <https://geo.wa.gov/datasets/wadnr>::wa-county-boundaries/about
+-   <https://maps.doh.wa.lcl/portal/apps/sites/#/geohub/>
 
 ```{r}
 # WA County Boundaries from DNR from API Resources GeoJSON endpoint here: https://geo.wa.gov/datasets/wadnr::wa-county-boundaries/about
@@ -48,6 +72,8 @@ wa_county_cent <- sf::st_centroid(wa_county)
 ```
 
 ## A Simple plot of spatial data we found online
+
+Let's plot a simple map without a lot of modifications. I prefer starting with something minimal when mapping in R so I reuse this `ggplot2` code a lot between projects:
 
 ```{r}
 wa_county_map <- ggplot() +
@@ -66,6 +92,14 @@ wa_county_map <- ggplot() +
 
 wa_county_map
 ```
+
+### Map Refinements v2
+
+Let's Refine this map to look better:
+
+-   Separating county labels with two words to two separate lines to fit in their polygons better
+-   Individual adjustments to counties that have poor label placement – i.e. Columbia, Garfield, Wahkiakum counties
+
 ```{r}
 # Adjust two word counties to use a new line for each word to save space
 wa_county_cent <- wa_county_cent %>%
@@ -98,8 +132,14 @@ wa_county_map2 <- ggplot() +
 wa_county_map2
 ```
 
-## Prepare data for reporting purposes (not analysis)
+### Map Refinements v3
+
 This is looking better for visualization purposes but where did all the water go?! Why are the counties such a weird shape from what we are used to looking at? Let's fix that.
+
+- Add bordering Oregon and Idaho polygons
+- Add some marine areas within the legal county boundaries – I think people are used to seeing WA this way rather than the full legal boundaries
+- Add and reorder the `geom_sf` layers so that the county lines, polygons, and labels overlap nicely
+- Create a boundary box to focus our map view on WA instead of WA + OR + ID
 
 ```{r}
 # Get some other boundaries from ESRI living atlas: 
@@ -123,7 +163,6 @@ wa_bbox <- sf::st_bbox(wa_county)
 # Filter States to those touching WA
 states_wa <- states %>% filter(STATE_NAME %in% c("Idaho", "Oregon"))
 ```
-
 
 ```{r}
 wa_county_map3 <- ggplot() +
@@ -155,3 +194,13 @@ wa_county_map3 <- ggplot() +
 wa_county_map3
 ```
 
+## Expansion Ideas
+
+-   Demo other R packages that assist with accessing ArcGIS data and geoprocessing tools?
+-   R-based geoprocessing tools: clip, dissolve, union, merge, mask, etc.
+-   Add basemaps
+-   Interactive maps with `tmap`, `leaflet`, `AGOL`
+-   Other capabilities of the [ArcGIS REST API](https://developers.arcgis.com/rest/) that make it an attractive way to get data
+-   Sharable, reusable functions for common spatial tasks at WADOH
+-   Reprojecting data for doing spatial analysis
+-   
