@@ -1,0 +1,154 @@
+---
+title: "R Spatial Examples"
+author: "Skyler Elmstrom"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Dependencies
+
+```{r}
+# Restore packages from the lockfile
+renv::restore()
+```
+
+```{r}
+install.packages("pak") # fast and secure package installer
+```
+
+```{r}
+# pak::pkg_install(c("sf", "terra", "tidyverse")) # install meta packages for common spatial data needs
+```
+
+```{r}
+library(dplyr) # tidyverse
+library(ggplot2) # tidyverse
+library(sf) # https://r-spatial.github.io/sf/
+library(stringr) # tidyverse
+```
+
+
+## Load Some Spatial Data
+https://geo.wa.gov/datasets/wadnr::wa-county-boundaries/about
+https://maps.doh.wa.lcl/portal/apps/sites/#/geohub/
+
+```{r}
+# WA County Boundaries from DNR from API Resources GeoJSON endpoint here: https://geo.wa.gov/datasets/wadnr::wa-county-boundaries/about
+url <- "https://gis.dnr.wa.gov/site3/rest/services/Public_Boundaries/WADNR_PUBLIC_Cadastre_OpenData/FeatureServer/11/query?where=1%3D1&outFields=JURISDICT_FIPS_DESG_CD,JURISDICT_NM,JURISDICT_LABEL_NM&outSR=4326&f=json"
+
+# Load Data
+wa_county <- sf::st_read(url)
+
+# Get Some centroids for labelling if you'd like
+wa_county_cent <- sf::st_centroid(wa_county)
+```
+## A Simple plot of spatial data we found online
+
+
+```{r}
+wa_county_map <- ggplot() +
+  geom_sf(data = wa_county, fill = "lightblue", color = "white") + # Plot county boundaries
+  geom_sf_text(data = wa_county_cent, aes(label = JURISDICT_LABEL_NM), size = 3, color = "black") + # Plot centroids with labels
+  theme_minimal() +
+  labs(title = "Washington County Boundaries with Centroids")  +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank()
+  )
+
+wa_county_map
+```
+```{r}
+# Adjust two word counties to use a new line for each word to save space
+wa_county_cent <- wa_county_cent %>%
+  mutate(JURISDICT_LABEL_NM_n = str_replace(JURISDICT_LABEL_NM, " ", "\n"))
+
+# We might also consider leader lines for counties that are small but have large names
+
+# Adjust centroids so labels do not overlap using nudge_x and nudge_y
+wa_county_map2 <- ggplot() +
+  geom_sf(data = wa_county, fill = "lightpink", color = "white") + # Plot county boundaries
+  geom_sf_text(data = wa_county_cent %>% filter(!JURISDICT_LABEL_NM %in% c("Columbia", "Garfield")), 
+               aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black") +
+  geom_sf_text(data = wa_county_cent %>% filter(JURISDICT_LABEL_NM == "Columbia"), 
+               aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black", nudge_y = 0.1) +
+  geom_sf_text(data = wa_county_cent %>% filter(JURISDICT_LABEL_NM == "Garfield"), 
+               aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black", nudge_y = 0.15) +
+  theme_minimal() +
+  labs(title = "Washington County Boundaries with Centroids")  +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank()
+  )
+
+wa_county_map2
+```
+
+## Prepare data for reporting purposes (not analysis)
+This is looking better for visualization purposes but where did all the water go?! Why are the counties such a weird shape from what we are used to looking at? Let's fix that.
+
+```{r}
+# Get some other boundaries from ESRI living atlas: 
+
+# NOTE: These endpoints won't work in R because its designed for ArcGIS use. We need to convert them to a REST API endpoint.
+# See: https://community.esri.com/t5/gis-life-blog/accessing-arcgis-rest-services-using-r/ba-p/898451
+
+# states <- sf::st_read("https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Census_States/FeatureServer")
+
+states <- sf::st_read(paste0("https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Census_States/FeatureServer/", 0, "/query?where=1%3D1&outFields=*&f=geojson"))
+
+# Get some marine and water bodies data
+marine <- sf::st_read("data/marine.shp")
+
+# Get extent of WA counties for focusing the output map frame
+wa_bbox <- sf::st_bbox(wa_county)
+
+```
+
+```{r}
+# Filter States to those touching WA
+states_wa <- states %>% filter(STATE_NAME %in% c("Idaho", "Oregon"))
+```
+
+
+```{r}
+wa_county_map3 <- ggplot() +
+  geom_sf(data = states_wa, color = "white", fill = "lightgrey") +
+  geom_sf(data = wa_county, fill = "lightpink", color = NA) + # Plot county boundaries
+  geom_sf(data = marine, color = NA, fill = "lightblue2") +
+  geom_sf(data = wa_county, fill = NA, color = "white") + # Plot county boundary lines over other polygon layers
+  geom_sf_text(data = wa_county_cent %>% filter(!JURISDICT_LABEL_NM %in% c("Columbia", "Garfield")),# Add all labels except Columbia and Garfield
+               aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black") +
+  geom_sf_text(data = wa_county_cent %>% filter(JURISDICT_LABEL_NM == "Columbia"), # Add and adjust Columbia label separately
+               aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black", nudge_y = 0.1) + 
+  geom_sf_text(data = wa_county_cent %>% filter(JURISDICT_LABEL_NM == "Garfield"), # Add and adjust Garfield label separately
+               aes(label = JURISDICT_LABEL_NM_n), size = 3, color = "black", nudge_y = 0.15) +
+  coord_sf(xlim = c(wa_bbox$xmin, wa_bbox$xmax), ylim = c(wa_bbox$ymin, wa_bbox$ymax)) + # Focus map on extent of county data only
+  theme_minimal() +
+  labs(title = "Washington State County Boundaries with Centroid Labelling")  +
+  theme(
+    axis.title.x = element_blank(), # Remove X axis label
+    axis.title.y = element_blank(), # Remove Y axis label
+    panel.grid.major = element_blank(), # Remove major grid lines
+    panel.grid.minor = element_blank(), # Remove minor grid lines
+    axis.text.x = element_blank(), # Remove X axis grid text
+    axis.text.y = element_blank(), # Remove Y axis grid text
+    theme(plot.title = element_text(hjust = 0.5)) # Centering the title
+  )
+  
+wa_county_map3
+
+```
+
