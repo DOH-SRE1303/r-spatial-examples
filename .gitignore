@@ -1,7 +1,6 @@
 # Project-specific
 *renv/
 *.Rproj
-*.html
 *.Rprofile
 
 # History files
