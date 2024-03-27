@@ -5,7 +5,9 @@ date: "`r Sys.Date()`"
 format:
   html:
     toc: true
+    output-file: index.html
     standalone: true
+    embed-resources: true
 editor: visual
 ---
 
